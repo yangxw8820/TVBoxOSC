@@ -3,12 +3,14 @@ package com.github.tvbox.osc.ui.dialog;
 import android.app.Activity;
 import android.content.Context;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
+import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.SubtitleHelper;
 
@@ -16,21 +18,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class SubtitleDialog extends BaseDialog {
 
+    private TextView subtitleOption;
     public TextView selectInternal;
-    private TextView selectLocal;
-    private TextView selectRemote;
-    private TextView subtitleSizeMinus;
+    public TextView selectLocal;
+    public TextView selectRemote;
+    private ImageView subtitleSizeMinus;
     private TextView subtitleSizeText;
-    private TextView subtitleSizePlus;
-    private TextView subtitleTimeMinus;
+    private ImageView subtitleSizePlus;
+    private ImageView subtitleTimeMinus;
     private TextView subtitleTimeText;
-    private TextView subtitleTimePlus;
+    private ImageView subtitleTimePlus;
     private TextView subtitleStyleOne;
     private TextView subtitleStyleTwo;
 
-    private SearchSubtitleListener mSearchSubtitleListener;
-    private LocalFileChooserListener mLocalFileChooserListener;
     private SubtitleViewListener mSubtitleViewListener;
+    private LocalFileChooserListener mLocalFileChooserListener;
+    private SearchSubtitleListener mSearchSubtitleListener;
 
     public SubtitleDialog(@NonNull @NotNull Context context) {
         super(context);
@@ -42,6 +45,7 @@ public class SubtitleDialog extends BaseDialog {
     }
 
     private void initView(Context context) {
+        subtitleOption = findViewById(R.id.title);
         selectInternal = findViewById(R.id.selectInternal);
         selectLocal = findViewById(R.id.selectLocal);
         selectRemote = findViewById(R.id.selectRemote);
@@ -54,6 +58,24 @@ public class SubtitleDialog extends BaseDialog {
         subtitleStyleOne = findViewById(R.id.subtitleStyleOne);
         subtitleStyleTwo = findViewById(R.id.subtitleStyleTwo);
 
+        // Set Title Tip
+        subtitleOption.setText(HomeActivity.getRes().getString(R.string.vod_sub_option));
+        selectInternal.setText(HomeActivity.getRes().getString(R.string.vod_sub_int));
+        selectLocal.setText(HomeActivity.getRes().getString(R.string.vod_sub_ext));
+        selectRemote.setText(HomeActivity.getRes().getString(R.string.vod_sub_remote));
+        subtitleSizeText.setText(HomeActivity.getRes().getString(R.string.vod_sub_size));
+        subtitleTimeText.setText(HomeActivity.getRes().getString(R.string.vod_sub_delay));
+
+        // Internal Subtitle from Video File
+        selectInternal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                dismiss();
+                mSubtitleViewListener.selectInternalSubtitle();
+            }
+        });
+        // Local Drive Subtitle
         selectLocal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -62,7 +84,7 @@ public class SubtitleDialog extends BaseDialog {
                 mLocalFileChooserListener.openLocalFileChooserDialog();
             }
         });
-
+        // Remote Search Subtitle
         selectRemote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -81,8 +103,8 @@ public class SubtitleDialog extends BaseDialog {
                 String sizeStr = subtitleSizeText.getText().toString();
                 int curSize = Integer.parseInt(sizeStr);
                 curSize -= 2;
-                if (curSize <= 12) {
-                    curSize = 12;
+                if (curSize <= 10) {
+                    curSize = 10;
                 }
                 subtitleSizeText.setText(Integer.toString(curSize));
                 SubtitleHelper.setTextSize(curSize);
@@ -150,14 +172,6 @@ public class SubtitleDialog extends BaseDialog {
                 mSubtitleViewListener.setSubtitleDelay(mseconds);
             }
         });
-        selectInternal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FastClickCheckUtil.check(view);
-                dismiss();
-                mSubtitleViewListener.selectInternalSubtitle();
-            }
-        });
 
         subtitleStyleOne.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -168,7 +182,6 @@ public class SubtitleDialog extends BaseDialog {
                 Toast.makeText(getContext(), "设置样式成功", Toast.LENGTH_SHORT).show();
             }
         });
-
         subtitleStyleTwo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -206,4 +219,5 @@ public class SubtitleDialog extends BaseDialog {
         void selectInternalSubtitle();
         void setTextStyle(int style);
     }
+
 }

@@ -19,6 +19,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.Subtitle;
 import com.github.tvbox.osc.bean.SubtitleData;
+import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.ui.adapter.SearchSubtitleAdapter;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.viewmodel.SubtitleViewModel;
@@ -65,6 +66,8 @@ public class SearchSubtitleDialog extends BaseDialog {
         mGridView = findViewById(R.id.mGridView);
         subtitleSearchEt = findViewById(R.id.input);
         subtitleSearchBtn = findViewById(R.id.inputSubmit);
+        subtitleSearchBtn.setText(HomeActivity.getRes().getString(R.string.vod_sub_search));
+
         searchAdapter = new SearchSubtitleAdapter();
         mGridView.setHasFixedSize(true);
         mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 1, false));
@@ -211,6 +214,5 @@ public class SearchSubtitleDialog extends BaseDialog {
         }
         dismiss();
     }
-
 
 }

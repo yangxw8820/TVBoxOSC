@@ -28,7 +28,7 @@ public class GridFilterDialog extends BaseDialog {
 
     public GridFilterDialog(@NonNull @NotNull Context context) {
         super(context);
-        setCanceledOnTouchOutside(false);
+        setCanceledOnTouchOutside(true);
         setCancelable(true);
         setContentView(R.layout.dialog_grid_filter);
         filterRoot = findViewById(R.id.filterRoot);
@@ -77,7 +77,7 @@ public class GridFilterDialog extends BaseDialog {
                         }
                         TextView val = view.findViewById(R.id.filterValue);
                         val.getPaint().setFakeBoldText(true);
-                        val.setTextColor(getContext().getResources().getColor(R.color.color_02F8E1));
+                        val.setTextColor(getContext().getResources().getColor(R.color.color_FF0057));
                         pre = view;
                     }
                 }
@@ -96,7 +96,7 @@ public class GridFilterDialog extends BaseDialog {
         layoutParams.gravity = Gravity.BOTTOM;
         layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        layoutParams.dimAmount = 0f;
+        // layoutParams.dimAmount = 0f;
         getWindow().getDecorView().setPadding(0, 0, 0, 0);
         getWindow().setAttributes(layoutParams);
     }

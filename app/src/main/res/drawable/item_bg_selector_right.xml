@@ -10,3 +10,4 @@
         android:state_focused="true"
         android:drawable="@drawable/item_right_bg" />
 </selector>
+

@@ -7,14 +7,18 @@ import android.util.Base64;
 
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.Spider;
+import com.github.catvod.crawler.SpiderNull;
+import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
 import com.github.tvbox.osc.bean.IJKCode;
+import com.github.tvbox.osc.bean.LiveChannelGroup;
 import com.github.tvbox.osc.bean.LiveChannelItem;
 import com.github.tvbox.osc.bean.ParseBean;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.util.AES;
+import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.util.AdBlocker;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.HawkConfig;
@@ -28,6 +32,7 @@ import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
+import com.undcover.freedom.pyramid.PythonLoader;
 
 import org.json.JSONObject;
 
@@ -88,7 +93,7 @@ public class ApiConfig {
         String content = json;
         try {
             if (AES.isJson(content)) return content;
-            if(content.contains("**")){
+            if (content.contains("**")) {
                 String[] data = json.split("\\*\\*");
                 content = new String(Base64.decode(data[1], Base64.DEFAULT));
             }
@@ -98,10 +103,9 @@ public class ApiConfig {
                 String key = AES.rightPadding(content.substring(content.indexOf("$#") + 2, content.indexOf("#$")), "0", 16);
                 String iv = AES.rightPadding(content.substring(content.length() - 13), "0", 16);
                 json = AES.CBC(data, key, iv);
-            }else if (configKey !=null && !AES.isJson(content)) {
+            } else if (configKey != null && !AES.isJson(content)) {
                 json = AES.ECB(content, configKey);
-            }
-            else{
+            } else {
                 json = content;
             }
         } catch (Exception e) {
@@ -111,7 +115,8 @@ public class ApiConfig {
     }
 
     public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
-        String apiUrl = Hawk.get(HawkConfig.API_URL, "");
+        // Embedded Source : Update in Strings.xml if required
+        String apiUrl = Hawk.get(HawkConfig.API_URL, HomeActivity.getRes().getString(R.string.app_source));
         if (apiUrl.isEmpty()) {
             callback.error("-1");
             return;
@@ -130,11 +135,11 @@ public class ApiConfig {
         if (apiUrl.contains(pk)) {
             String[] a = apiUrl.split(pk);
             TempKey = a[1];
-            if (apiUrl.startsWith("clan")){
+            if (apiUrl.startsWith("clan")) {
                 configUrl = clanToAddress(a[0]);
-            }else if (apiUrl.startsWith("http")){
+            } else if (apiUrl.startsWith("http")) {
                 configUrl = a[0];
-            }else {
+            } else {
                 configUrl = "http://" + a[0];
             }
         } else if (apiUrl.startsWith("clan")) {
@@ -201,7 +206,7 @@ public class ApiConfig {
                             result = clanContentFix(clanToAddress(apiUrl), result);
                         }
                         //假相對路徑
-                        result = fixContentPath(apiUrl,result);
+                        result = fixContentPath(apiUrl, result);
                         return result;
                     }
                 });
@@ -230,39 +235,39 @@ public class ApiConfig {
                 .headers("Accept", requestAccept)
                 .execute(new AbsCallback<File>() {
 
-            @Override
-            public File convertResponse(okhttp3.Response response) throws Throwable {
-                File cacheDir = cache.getParentFile();
-                if (!cacheDir.exists())
-                    cacheDir.mkdirs();
-                if (cache.exists())
-                    cache.delete();
-                FileOutputStream fos = new FileOutputStream(cache);
-                fos.write(response.body().bytes());
-                fos.flush();
-                fos.close();
-                return cache;
-            }
+                    @Override
+                    public File convertResponse(okhttp3.Response response) throws Throwable {
+                        File cacheDir = cache.getParentFile();
+                        if (!cacheDir.exists())
+                            cacheDir.mkdirs();
+                        if (cache.exists())
+                            cache.delete();
+                        FileOutputStream fos = new FileOutputStream(cache);
+                        fos.write(response.body().bytes());
+                        fos.flush();
+                        fos.close();
+                        return cache;
+                    }
 
-            @Override
-            public void onSuccess(Response<File> response) {
-                if (response.body().exists()) {
-                    if (jarLoader.load(response.body().getAbsolutePath())) {
-                        callback.success();
-                    } else {
+                    @Override
+                    public void onSuccess(Response<File> response) {
+                        if (response.body().exists()) {
+                            if (jarLoader.load(response.body().getAbsolutePath())) {
+                                callback.success();
+                            } else {
+                                callback.error("");
+                            }
+                        } else {
+                            callback.error("");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<File> response) {
+                        super.onError(response);
                         callback.error("");
                     }
-                } else {
-                    callback.error("");
-                }
-            }
-
-            @Override
-            public void onError(Response<File> response) {
-                super.onError(response);
-                callback.error("");
-            }
-        });
+                });
     }
 
     private void parseJson(String apiUrl, File f) throws Throwable {
@@ -278,6 +283,9 @@ public class ApiConfig {
     }
 
     private void parseJson(String apiUrl, String jsonStr) {
+        // pyramid
+        PythonLoader.getInstance().setConfig(jsonStr);
+
         JsonObject infoJson = new Gson().fromJson(jsonStr, JsonObject.class);
         // spider
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
@@ -297,9 +305,9 @@ public class ApiConfig {
             sb.setQuickSearch(DefaultConfig.safeJsonInt(obj, "quickSearch", 1));
             sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
             sb.setPlayerUrl(DefaultConfig.safeJsonString(obj, "playUrl", ""));
-            if(obj.has("ext") && (obj.get("ext").isJsonArray() || obj.get("ext").isJsonObject())){
+            if (obj.has("ext") && (obj.get("ext").isJsonArray() || obj.get("ext").isJsonObject())) {
                 sb.setExt(obj.get("ext").toString());
-            }else {
+            } else {
                 sb.setExt(DefaultConfig.safeJsonString(obj, "ext", ""));
             }
             sb.setJar(DefaultConfig.safeJsonString(obj, "jar", ""));
@@ -357,9 +365,9 @@ public class ApiConfig {
                 String extUrl = Uri.parse(url).getQueryParameter("ext");
                 if (extUrl != null && !extUrl.isEmpty()) {
                     String extUrlFix;
-                    if(extUrl.startsWith("http") || extUrl.startsWith("clan://")){
+                    if (extUrl.startsWith("http") || extUrl.startsWith("clan://")) {
                         extUrlFix = extUrl;
-                    }else {
+                    } else {
                         extUrlFix = new String(Base64.decode(extUrl, Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8");
                     }
 //                    System.out.println("extUrlFix :"+extUrlFix);
@@ -381,12 +389,12 @@ public class ApiConfig {
         }
         //video parse rule for host
         if (infoJson.has("rules")) {
-            for(JsonElement oneHostRule : infoJson.getAsJsonArray("rules")) {
+            for (JsonElement oneHostRule : infoJson.getAsJsonArray("rules")) {
                 JsonObject obj = (JsonObject) oneHostRule;
                 String host = obj.get("host").getAsString();
                 JsonArray ruleJsonArr = obj.getAsJsonArray("rule");
                 ArrayList<String> rule = new ArrayList<>();
-                for(JsonElement one : ruleJsonArr) {
+                for (JsonElement one : ruleJsonArr) {
                     String oneRule = one.getAsString();
                     rule.add(oneRule);
                 }
@@ -477,10 +485,38 @@ public class ApiConfig {
     }
 
     public Spider getCSP(SourceBean sourceBean) {
+        // Getting Pyramid api
+        if (sourceBean.getApi().startsWith("py_")) {
+            try {
+                return PythonLoader.getInstance().getSpider(sourceBean.getKey(), sourceBean.getExt());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new SpiderNull();
+            }
+        }
+
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 
     public Object[] proxyLocal(Map param) {
+
+        // Getting pyramid api
+        try {
+            if (param.containsKey("api")) {
+                String doStr = param.get("do").toString();
+                if (doStr.equals("ck"))
+                    return PythonLoader.getInstance().proxyLocal("", "", param);
+                SourceBean sourceBean = ApiConfig.get().getSource(doStr);
+                return PythonLoader.getInstance().proxyLocal(sourceBean.getKey(), sourceBean.getExt(), param);
+            } else {
+                String doStr = param.get("do").toString();
+                if (doStr.equals("live"))
+                    return PythonLoader.getInstance().proxyLocal("", "", param);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return jarLoader.proxyInvoke(param);
     }
 
@@ -583,11 +619,11 @@ public class ApiConfig {
 
     String fixContentPath(String url, String content) {
         if (content.contains("\"./")) {
-            if(!url.startsWith("http") && !url.startsWith("clan://")){
+            if (!url.startsWith("http") && !url.startsWith("clan://")) {
                 url = "http://" + url;
             }
-            if(url.startsWith("clan://"))url=clanToAddress(url);
-            content = content.replace("./", url.substring(0,url.lastIndexOf("/") + 1));
+            if (url.startsWith("clan://")) url = clanToAddress(url);
+            content = content.replace("./", url.substring(0, url.lastIndexOf("/") + 1));
         }
         return content;
     }
