@@ -190,6 +190,10 @@ public class QuickJSContext {
         runGC(context);
     }
 
+    static {
+        System.loadLibrary("quickjs");
+    }
+
     // context
     private native long createContext();
     private native void destroyContext(long context);

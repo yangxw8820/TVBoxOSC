@@ -62,6 +62,9 @@
     <string name="mn_dns">安全DNS</string>
     <string name="mn_locale">语言</string>
     <string name="mn_about">关于</string>
+    <string name="mn_fast_search">聚合模式</string>
+    <string name="mn_epg_api_tip">EPG地址已隐藏</string>
+    <string name="mn_home_rec_style">首页多行</string>
 
     // Settings Dialog Pop-Up //
     <string name="dia_source">请选择数据源</string>

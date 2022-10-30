@@ -63,6 +63,9 @@
     <string name="mn_dns">DNS</string>
     <string name="mn_locale">Language</string>
     <string name="mn_about">About</string>
+    <string name="mn_fast_search">Search Type</string>
+    <string name="mn_epg_api_tip">EPG Address Hide</string>
+    <string name="mn_home_rec_style">首页多行</string>
 
     // Settings Dialog Pop-Up //
     <string name="dia_source">Select Source</string>

@@ -9,8 +9,8 @@ import android.app.RemoteAction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.net.http.SslError;
@@ -60,9 +60,6 @@ import com.github.tvbox.osc.player.MyVideoView;
 import com.github.tvbox.osc.player.TrackInfo;
 import com.github.tvbox.osc.player.TrackInfoBean;
 import com.github.tvbox.osc.player.controller.VodController;
-import com.github.tvbox.osc.player.thirdparty.Kodi;
-import com.github.tvbox.osc.player.thirdparty.MXPlayer;
-import com.github.tvbox.osc.player.thirdparty.ReexPlayer;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.SearchSubtitleDialog;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
@@ -213,7 +210,7 @@ public class PlayActivity extends BaseActivity {
             @Override
             public void playPre() {
                 if (mVodInfo.reverseSort) {
-                    PlayActivity.this.playNext();
+                    PlayActivity.this.playNext(true);
                 } else {
                     PlayActivity.this.playPrevious();
                 }
@@ -267,21 +264,7 @@ public class PlayActivity extends BaseActivity {
 
     void initVideoDurationSomeThing() {
         videoDuration = mVideoView.getMediaPlayer().getDuration();
-        if (videoDuration ==0) {
-            mController.mPlayerSpeedBtn.setVisibility(View.GONE);
-            mController.mPlayerTimeStartEndText.setVisibility(View.GONE);
-            mController.mPlayerTimeStartBtn.setVisibility(View.GONE);
-            mController.mPlayerTimeSkipBtn.setVisibility(View.GONE);
-            mController.mPlayerTimeStepBtn.setVisibility(View.GONE);
-            mController.mPlayerTimeResetBtn.setVisibility(View.GONE);
-        }else {
-            mController.mPlayerSpeedBtn.setVisibility(View.VISIBLE);
-            mController.mPlayerTimeStartEndText.setVisibility(View.VISIBLE);
-            mController.mPlayerTimeStartBtn.setVisibility(View.VISIBLE);
-            mController.mPlayerTimeSkipBtn.setVisibility(View.VISIBLE);
-            mController.mPlayerTimeStepBtn.setVisibility(View.VISIBLE);
-            mController.mPlayerTimeResetBtn.setVisibility(View.VISIBLE);
-        }
+        mController.setVideoDurationSomeThing(videoDuration != 0);
     }
 
     //设置字幕
@@ -294,15 +277,8 @@ public class PlayActivity extends BaseActivity {
         }
     }
 
-    void selectMySubtitle() throws Exception {
+    void selectMySubtitle() {
         SubtitleDialog subtitleDialog = new SubtitleDialog(mContext);
-//        int playerType = mVodPlayerCfg.getInt("pl");
-//        subtitleDialog.selectInternal.setVisibility(View.VISIBLE);
-//        if (mController.mSubtitleView.hasInternal && playerType == 1) {
-//            subtitleDialog.selectInternal.setVisibility(View.VISIBLE);
-//        } else {
-//            subtitleDialog.selectInternal.setVisibility(View.GONE);
-//        }
         subtitleDialog.setSubtitleViewListener(new SubtitleDialog.SubtitleViewListener() {
             @Override
             public void setTextSize(int size) {
@@ -841,7 +817,7 @@ public class PlayActivity extends BaseActivity {
                     } else if (currentStatus == PIP_BOARDCAST_ACTION_PLAYPAUSE) {
                         mController.togglePlay();
                     } else if (currentStatus == PIP_BOARDCAST_ACTION_NEXT) {
-                        playNext();
+                        playNext(true);
                     }
                 }
             };
@@ -929,9 +905,8 @@ public class PlayActivity extends BaseActivity {
             return true;
         }
         if (autoRetryCount < 2) {
-            play(false);
             autoRetryCount++;
-            play();
+            play(false);
             return true;
         } else {
             autoRetryCount = 0;
@@ -1318,7 +1293,9 @@ public class PlayActivity extends BaseActivity {
     private WebView mSysWebView;
     private SysWebClient mSysWebClient;
     private Map<String, Boolean> loadedUrls = new HashMap<>();
-    private boolean loadFound = false;
+    private LinkedList<String> loadFoundVideoUrls = new LinkedList<>();
+    private HashMap<String, HashMap<String, String>> loadFoundVideoUrlsHeader = new HashMap<>();
+    private AtomicInteger loadFoundCount = new AtomicInteger(0);
 
     void loadWebView(String url) {
         if (mSysWebView == null && mXwalkWebView == null) {

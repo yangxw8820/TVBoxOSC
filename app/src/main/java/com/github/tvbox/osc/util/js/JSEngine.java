@@ -366,10 +366,6 @@ public class JSEngine {
         return "";
     }
 
-    public void create() {
-        System.loadLibrary("quickjs");
-    }
-
     public JSThread getJSThread() {
         byte count = Byte.MAX_VALUE;
         JSThread thread = null;
