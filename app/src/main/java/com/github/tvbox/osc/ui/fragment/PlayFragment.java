@@ -66,6 +66,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.MD5;
 import com.github.tvbox.osc.util.PlayerHelper;
+import com.github.tvbox.osc.util.VideoParseRuler;
 import com.github.tvbox.osc.util.XWalkUtils;
 import com.github.tvbox.osc.util.thunder.Thunder;
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
@@ -1513,7 +1514,7 @@ public class PlayFragment extends BaseLazyFragment {
                 for (String k : hds.keySet()) {
                     if (k.equalsIgnoreCase("user-agent")
                             || k.equalsIgnoreCase("referer")
-                            || k.equalsIgnoreCase("origin"))
+                            || k.equalsIgnoreCase("origin")
                             || k.equalsIgnoreCase("cookie")) {
                         webHeaders.put(k," " + hds.get(k));
                     }
