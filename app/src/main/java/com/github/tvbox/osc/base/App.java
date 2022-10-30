@@ -1,5 +1,6 @@
 package com.github.tvbox.osc.base;
 
+import android.app.Activity;
 import androidx.multidex.MultiDexApplication;
 
 import com.github.tvbox.osc.bean.VodInfo;
@@ -7,7 +8,8 @@ import com.github.tvbox.osc.callback.EmptyCallback;
 import com.github.tvbox.osc.callback.LoadingCallback;
 import com.github.tvbox.osc.data.AppDataManager;
 import com.github.tvbox.osc.server.ControlManager;
-import com.github.tvbox.osc.util.EpgNameFuzzyMatch;
+import com.github.tvbox.osc.util.AppManager;
+import com.github.tvbox.osc.util.EpgUtil;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LocaleHelper;
 import com.github.tvbox.osc.util.OkGoHelper;
@@ -36,8 +38,8 @@ public class App extends MultiDexApplication {
         // takagen99 : Initialize Locale
         initLocale();
         // OKGo
-        OkGoHelper.init();
-        EpgNameFuzzyMatch.init();
+        OkGoHelper.init(); //台标获取
+        EpgUtil.init();
         // 初始化Web服务器
         ControlManager.init(this);
         //初始化数据库
@@ -102,4 +104,7 @@ public class App extends MultiDexApplication {
         }
     }
 
+    public Activity getCurrentActivity() {
+        return AppManager.getInstance().currentActivity();
+    }
 }

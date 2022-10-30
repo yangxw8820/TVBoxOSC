@@ -8,8 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.github.tvbox.osc.R;
+import com.github.tvbox.osc.bean.Epginfo;
 import com.github.tvbox.osc.ui.tv.widget.AudioWaveView;
-import com.github.tvbox.osc.ui.tv.widget.Epginfo;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

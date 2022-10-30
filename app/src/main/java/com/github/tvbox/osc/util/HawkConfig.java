@@ -42,6 +42,8 @@ public class HawkConfig {
     public static final String HOME_SHOW_SOURCE = "show_source";
     public static final String HOME_LOCALE = "language"; // 0 中文 1 英文
     public static final String PIC_IN_PIC = "pic_in_pic"; // true = on, false = off
+    public static final String NOW_DATE = "now_date"; //当前日期
+    public static final String REMOTE_TVBOX = "remote_tvbox_host";
 
     public static boolean isDebug(){
         return Hawk.get(DEBUG_OPEN, false);

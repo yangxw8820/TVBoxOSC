@@ -47,6 +47,9 @@ import com.github.tvbox.osc.util.urlhttp.CallBackUtil;
 import com.github.tvbox.osc.util.urlhttp.UrlHttpUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
@@ -713,6 +716,269 @@ public class LivePlayActivity extends BaseActivity {
         }
     };
 
+    //laodao 7天Epg数据绑定和展示
+    private void initEpgListView() {
+        mRightEpgList.setHasFixedSize(true);
+        mRightEpgList.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+        epgListAdapter = new LiveEpgAdapter();
+        mRightEpgList.setAdapter(epgListAdapter);
+
+        mRightEpgList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+            }
+        });
+        //电视
+        mRightEpgList.setOnItemListener(new TvRecyclerView.OnItemListener() {
+            @Override
+            public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
+                epgListAdapter.setFocusedEpgIndex(-1);
+            }
+
+            @Override
+            public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+                epgListAdapter.setFocusedEpgIndex(position);
+            }
+
+            @Override
+            public void onItemClick(TvRecyclerView parent, View itemView, int position) {
+
+                Date date = liveEpgDateAdapter.getSelectedIndex() < 0 ? new Date() :
+                        liveEpgDateAdapter.getData().get(liveEpgDateAdapter.getSelectedIndex()).getDateParamVal();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+                dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+                Epginfo selectedData = epgListAdapter.getItem(position);
+                String targetDate = dateFormat.format(date);
+                String shiyiStartdate = targetDate + selectedData.originStart.replace(":", "") + "30";
+                String shiyiEnddate = targetDate + selectedData.originEnd.replace(":", "") + "30";
+                Date now = new Date();
+                if(new Date().compareTo(selectedData.startdateTime) < 0){
+                    return;
+                }
+                epgListAdapter.setSelectedEpgIndex(position);
+                if (now.compareTo(selectedData.startdateTime) >= 0 && now.compareTo(selectedData.enddateTime) <= 0) {
+                    mVideoView.release();
+                    isSHIYI = false;
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.start();
+                    epgListAdapter.setShiyiSelection(-1, false,timeFormat.format(date));
+                    showProgressBars(false);
+                    return;
+                }
+                String shiyiUrl = currentLiveChannelItem.getUrl();
+                if (now.compareTo(selectedData.startdateTime) < 0) {
+
+                } else if(shiyiUrl.indexOf("PLTV/8888") !=-1){
+
+                    mHandler.removeCallbacks(mHideChannelListRun);
+                    mHandler.postDelayed(mHideChannelListRun, 100);
+                    mVideoView.release();
+                    shiyi_time = shiyiStartdate + "-" + shiyiEnddate;
+                    isSHIYI = true;
+                    //mCanSeek=true;
+                    if(shiyiUrl.contains("/PLTV/")){
+                        if (shiyiUrl.indexOf("?") <= 0) {
+                            shiyiUrl = shiyiUrl.replaceAll("/PLTV/", "/TVOD/");
+                            shiyiUrl += "?playseek=" + shiyi_time;
+                        } else if (shiyiUrl.indexOf("playseek") > 0) {
+                            shiyiUrl = shiyiUrl.replaceAll("playseek=(.*)", "playseek=" + shiyi_time);
+                        } else {
+                            shiyiUrl += "&playseek=" + shiyi_time;
+                        }
+                        Log.d("PLTV播放地址", "playUrl   " + shiyiUrl);
+                    }
+                    playUrl = shiyiUrl;
+
+                    mVideoView.setUrl(playUrl);
+                    mVideoView.start();
+                    epgListAdapter.setShiyiSelection(position, true, timeFormat.format(date));
+                    epgListAdapter.notifyDataSetChanged();
+                    mRightEpgList.setSelectedPosition(position);
+                    mRightEpgList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mRightEpgList.smoothScrollToPosition(position);
+                        }
+                    });
+                    shiyi_time_c = (int)getTime(formatDate.format(nowday) +" " + selectedData.start + ":" +"30", formatDate.format(nowday) +" " + selectedData.end + ":" +"30");
+                    ViewGroup.LayoutParams lp =  iv_play.getLayoutParams();
+                    lp.width=videoHeight/7;
+                    lp.height=videoHeight/7;
+                    sBar = (SeekBar) findViewById(R.id.pb_progressbar);
+                    sBar.setMax(shiyi_time_c*1000);
+                    sBar.setProgress((int)  mVideoView.getCurrentPosition());
+                    tv_currentpos.setText(durationToString((int)mVideoView.getCurrentPosition()));
+                    tv_duration.setText(durationToString(shiyi_time_c*1000));
+                    showProgressBars(true);
+                    isBack = true;
+                }
+            }
+        });
+
+        //手机/模拟器
+        epgListAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                Date date = liveEpgDateAdapter.getSelectedIndex() < 0 ? new Date() :
+                        liveEpgDateAdapter.getData().get(liveEpgDateAdapter.getSelectedIndex()).getDateParamVal();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+                dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+                Epginfo selectedData = epgListAdapter.getItem(position);
+                String targetDate = dateFormat.format(date);
+                String shiyiStartdate = targetDate + selectedData.originStart.replace(":", "") + "30";
+                String shiyiEnddate = targetDate + selectedData.originEnd.replace(":", "") + "30";
+                Date now = new Date();
+                if(new Date().compareTo(selectedData.startdateTime) < 0){
+                    return;
+                }
+                epgListAdapter.setSelectedEpgIndex(position);
+                if (now.compareTo(selectedData.startdateTime) >= 0 && now.compareTo(selectedData.enddateTime) <= 0) {
+                    mVideoView.release();
+                    isSHIYI = false;
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.start();
+                    epgListAdapter.setShiyiSelection(-1, false,timeFormat.format(date));
+                    showProgressBars(false);
+                    return;
+                }
+                String shiyiUrl = currentLiveChannelItem.getUrl();
+                if (now.compareTo(selectedData.startdateTime) < 0) {
+
+                } else if(shiyiUrl.indexOf("PLTV/8888") !=-1){
+                    mHandler.removeCallbacks(mHideChannelListRun);
+                    mHandler.postDelayed(mHideChannelListRun, 100);
+
+                    mVideoView.release();
+                    shiyi_time = shiyiStartdate + "-" + shiyiEnddate;
+                    isSHIYI = true;
+                    //mCanSeek=true;
+                    if(shiyiUrl.contains("/PLTV/")){
+                        if (shiyiUrl.indexOf("?") <= 0) {
+                            shiyiUrl = shiyiUrl.replaceAll("/PLTV/", "/TVOD/");
+                            shiyiUrl += "?playseek=" + shiyi_time;
+                        } else if (shiyiUrl.indexOf("playseek") > 0) {
+                            shiyiUrl = shiyiUrl.replaceAll("playseek=(.*)", "playseek=" + shiyi_time);
+                        } else {
+                            shiyiUrl += "&playseek=" + shiyi_time;
+                        }
+                        Log.d("PLTV播放地址", "playUrl   " + shiyiUrl);
+                    }
+                    playUrl = shiyiUrl;
+
+                    mVideoView.setUrl(playUrl);
+                    mVideoView.start();
+                    epgListAdapter.setShiyiSelection(position, true,timeFormat.format(date));
+                    epgListAdapter.notifyDataSetChanged();
+                    mRightEpgList.setSelectedPosition(position);
+                    mRightEpgList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mRightEpgList.smoothScrollToPosition(position);
+                        }
+                    });
+                    shiyi_time_c = (int)getTime(formatDate.format(nowday) +" " + selectedData.start + ":" +"30", formatDate.format(nowday) +" " + selectedData.end + ":" +"30");
+                    ViewGroup.LayoutParams lp =  iv_play.getLayoutParams();
+                    lp.width=videoHeight/7;
+                    lp.height=videoHeight/7;
+                    sBar = (SeekBar) findViewById(R.id.pb_progressbar);
+                    sBar.setMax(shiyi_time_c*1000);
+                    sBar.setProgress((int)  mVideoView.getCurrentPosition());
+                   // long dd = mVideoView.getDuration();
+                    tv_currentpos.setText(durationToString((int)mVideoView.getCurrentPosition()));
+                    tv_duration.setText(durationToString(shiyi_time_c*1000));
+                    showProgressBars(true);
+                    isBack = true;
+                }
+            }
+        });
+    }
+    //laoda 生成7天回放日期列表数据
+    private void initDayList() {
+        liveDayList.clear();
+        Date firstday = new Date(nowday.getTime() - 6 * 24 * 60 * 60 * 1000);
+        for (int i = 0; i < 8; i++) {
+            LiveDayListGroup daylist = new LiveDayListGroup();
+            Date newday= new Date(firstday.getTime() + i * 24 * 60 * 60 * 1000);
+            String day = formatDate1.format(newday);
+            daylist.setGroupIndex(i);
+            daylist.setGroupName(day);
+            liveDayList.add(daylist);
+        }
+
+
+    }
+    //kens 7天回放数据绑定和展示
+    private void initEpgDateView() {
+        mEpgDateGridView.setHasFixedSize(true);
+        mEpgDateGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+        liveEpgDateAdapter = new LiveEpgDateAdapter();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        SimpleDateFormat datePresentFormat = new SimpleDateFormat("MM-dd");
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        for (int i = 0; i < 8; i++) {
+            Date dateIns = calendar.getTime();
+            LiveEpgDate epgDate = new LiveEpgDate();
+            epgDate.setIndex(i);
+            epgDate.setDatePresented(datePresentFormat.format(dateIns));
+            epgDate.setDateParamVal(dateIns);
+            liveEpgDateAdapter.addData(epgDate);
+            calendar.add(Calendar.DAY_OF_MONTH, -1);
+        }
+        mEpgDateGridView.setAdapter(liveEpgDateAdapter);
+        mEpgDateGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+            }
+        });
+
+        //电视
+        mEpgDateGridView.setOnItemListener(new TvRecyclerView.OnItemListener() {
+            @Override
+            public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
+                liveEpgDateAdapter.setFocusedIndex(-1);
+            }
+
+            @Override
+            public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+                liveEpgDateAdapter.setFocusedIndex(position);
+            }
+
+            @Override
+            public void onItemClick(TvRecyclerView parent, View itemView, int position) {
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+                liveEpgDateAdapter.setSelectedIndex(position);
+                getEpg(liveEpgDateAdapter.getData().get(position).getDateParamVal());
+            }
+        });
+
+        //手机/模拟器
+        liveEpgDateAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                FastClickCheckUtil.check(view);
+                mHandler.removeCallbacks(mHideChannelListRun);
+                mHandler.postDelayed(mHideChannelListRun, 5000);
+                liveEpgDateAdapter.setSelectedIndex(position);
+                getEpg(liveEpgDateAdapter.getData().get(position).getDateParamVal());
+            }
+        });
+        liveEpgDateAdapter.setSelectedIndex(1);
+    }
+
+
+
     private void initVideoView() {
         controller = new LiveController(this);
         controller.setListener(new LiveController.LiveControlListener() {
@@ -759,7 +1025,11 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void changeSource(int direction) {
                 if (direction > 0)
-                    playNextSource();
+                    if(isBack){  //手机换源和显示时移控制栏
+                        showProgressBars(true);
+                    }else{
+                        playNextSource();
+                    }
                 else
                     playPreSource();
             }
@@ -1538,4 +1808,179 @@ public class LivePlayActivity extends BaseActivity {
         }
         return true;
     }
+
+    //计算两个时间相差的秒数
+    public static long getTime(String startTime, String endTime)  {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        long eTime = 0;
+        try {
+            eTime = df.parse(endTime).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        long sTime = 0;
+        try {
+            sTime = df.parse(startTime).getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        long diff = (eTime - sTime) / 1000;
+        return diff;
+    }
+    private  String durationToString(int duration) {
+        String result = "";
+        int dur = duration / 1000;
+        int hour=dur/3600;
+        int min = (dur / 60) % 60;
+        int sec = dur % 60;
+        if(hour>0){
+            if (min > 9) {
+                if (sec > 9) {
+                    result =hour+":"+ min + ":" + sec;
+                } else {
+                    result =hour+":"+ min + ":0" + sec;
+                }
+            } else {
+                if (sec > 9) {
+                    result =hour+":"+ "0" + min + ":" + sec;
+                } else {
+                    result = hour+":"+"0" + min + ":0" + sec;
+                }
+            }
+        }else{
+            if (min > 9) {
+                if (sec > 9) {
+                    result = min + ":" + sec;
+                } else {
+                    result = min + ":0" + sec;
+                }
+            } else {
+                if (sec > 9) {
+                    result ="0" + min + ":" + sec;
+                } else {
+                    result = "0" + min + ":0" + sec;
+                }
+            }
+        }
+        return result;
+    }
+    public void showProgressBars( boolean show){
+
+        sBar.requestFocus();
+        if(show){
+            backcontroller.setVisibility(View.VISIBLE);
+            ll_epg.setVisibility(View.GONE);
+
+        }else{
+            backcontroller.setVisibility(View.GONE);
+            ll_epg.setVisibility(View.VISIBLE);
+        }
+
+
+
+        iv_play.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                mVideoView.start();
+                iv_play.setVisibility(View.INVISIBLE);
+                countDownTimer.start();
+                iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.vod_pause));
+            }
+        });
+
+        iv_playpause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                if(mVideoView.isPlaying()){
+                    mVideoView.pause();
+                    countDownTimer.cancel();
+                    iv_play.setVisibility(View.VISIBLE);
+                    iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.icon_play));
+                }else{
+                    mVideoView.start();
+                    iv_play.setVisibility(View.INVISIBLE);
+                    countDownTimer.start();
+                    iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.vod_pause));
+                }
+            }
+        });
+        sBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+
+            @Override
+            public void onStopTrackingTouch(SeekBar arg0) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar arg0) {
+
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar sb, int progress, boolean fromuser) {
+                if(fromuser){
+                    if(countDownTimer!=null){
+                        mVideoView.seekTo(progress);
+                        countDownTimer.cancel();
+                        countDownTimer.start();
+                    }
+                }
+            }
+        });
+        sBar.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View arg0, int keycode, KeyEvent event) {
+                if(event.getAction()==KeyEvent.ACTION_DOWN){
+                    if(keycode==KeyEvent.KEYCODE_DPAD_CENTER||keycode==KeyEvent.KEYCODE_ENTER){
+                        if(mVideoView.isPlaying()){
+                            mVideoView.pause();
+                            countDownTimer.cancel();
+                            iv_play.setVisibility(View.VISIBLE);
+                            iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.icon_play));
+                        }else{
+                            mVideoView.start();
+                            iv_play.setVisibility(View.INVISIBLE);
+                            countDownTimer.start();
+                            iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.vod_pause));
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+        if(mVideoView.isPlaying()){
+            iv_play.setVisibility(View.INVISIBLE);
+            iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.vod_pause));
+        }else{
+            iv_play.setVisibility(View.VISIBLE);
+            iv_playpause.setBackground(ContextCompat.getDrawable(LivePlayActivity.context, R.drawable.icon_play));
+        }
+        if(countDownTimer3==null){
+            countDownTimer3 = new CountDownTimer(36000, 1000) {
+
+                @Override
+                public void onTick(long arg0) {
+
+                    if(mVideoView != null){
+                        sBar.setProgress((int) mVideoView.getCurrentPosition());
+                        tv_currentpos.setText(durationToString((int) mVideoView.getCurrentPosition()));
+                    }
+
+                }
+
+                @Override
+                public void onFinish() {
+                    if(backcontroller.getVisibility() == View.VISIBLE){
+                        backcontroller.setVisibility(View.GONE);
+                    }
+                }
+            };
+        }else{
+            countDownTimer3.cancel();
+        }
+        countDownTimer3.start();
+    }
+
 }
