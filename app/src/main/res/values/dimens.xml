@@ -87,9 +87,10 @@
     <dimen name="vs_380">380mm</dimen>
     <dimen name="vs_390">390mm</dimen>
     <dimen name="vs_400">400mm</dimen>
+    <dimen name="vs_410">410mm</dimen>
     <dimen name="vs_420">420mm</dimen>
     <dimen name="vs_440">440mm</dimen>
-    <dimen name="vs_410">410mm</dimen>
+    <dimen name="vs_460">460mm</dimen>
     <dimen name="vs_470">470mm</dimen>
     <dimen name="vs_480">480mm</dimen>
     <dimen name="vs_600">600mm</dimen>

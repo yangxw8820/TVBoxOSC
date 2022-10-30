@@ -64,7 +64,7 @@
                 android:gravity="center|start"
                 android:text="@string/hm_hist"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
@@ -108,7 +108,7 @@
                 android:gravity="center"
                 android:text="@string/hm_live"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
@@ -150,7 +150,7 @@
                 android:gravity="center"
                 android:text="@string/hm_search"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
@@ -193,7 +193,7 @@
                 android:gravity="center"
                 android:text="@string/hm_push"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
         </LinearLayout>
@@ -235,7 +235,7 @@
                 android:gravity="center"
                 android:text="@string/hm_file"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
@@ -277,7 +277,7 @@
                 android:gravity="center"
                 android:text="@string/hm_fav"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
@@ -319,7 +319,7 @@
                 android:gravity="center"
                 android:text="@string/hm_setting"
                 android:textAlignment="gravity"
-                android:textColor="@color/color_CCFFFFFF"
+                android:textColor="@color/color_FFFFFF_80"
                 android:textSize="@dimen/ts_24" />
 
                 </LinearLayout>
